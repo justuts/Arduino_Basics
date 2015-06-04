@@ -6,7 +6,8 @@
 int RedPins[] = {13, 12, 7};
 int GreenPin = 6;
 int SwitchPin = 2;
-int flashdel = 100;
+int PotPin = A0;
+int flashdel() {return(analogRead(PotPin) ^ 2);}
 int RedPinsCount = (sizeof(RedPins) / sizeof(RedPins[1]));
 int SwitchState = 0;
 
@@ -22,7 +23,7 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
-
+   
   if (buttonPressed() == 1) {
     delay(500);
     Serial.println(1);
@@ -69,11 +70,11 @@ void lightsOn () {
   for (int f = 0; f < flashsqLen; f++) {
     if (buttonPressed() == 1 ) {
       lightsOff();
-      delay(100);
+      delay(flashdel());
       break;
     }
     digitalWrite(flashsq[f], HIGH);
-    delay(flashdel);
+    delay(flashdel());
     digitalWrite(flashsq[f], LOW);
   } }
 }
