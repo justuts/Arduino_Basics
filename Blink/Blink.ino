@@ -24,9 +24,16 @@ void setup() {
 // the loop function runs over and over again forever
 void loop() {
    
+  //make a csv output
+  
+  Serial.print(millis());
+  Serial.print(",");
+  Serial.println(analogRead(PotPin));
+  delay(100);
+  
+  
   if (buttonPressed() == 1) {
     delay(500);
-    Serial.println(1);
     lightsOn();
     }  
   }
