@@ -85,12 +85,12 @@ void loop(){
   output_GPS = read_GPS(); //lat, lon, course, speed, date, timeUTC
   Serial.println("read gps");
   Serial.println(output_GPS);
-  output_csv = output_Comp + "," +
-               output_GPS;
+  output_csv = String(output_Comp + "," +
+               output_GPS);
   
   Serial.println(output_csv);
   Serial.println("writing to card");
-  File dataFile = SD.open("SSANZ_Data.txt", FILE_WRITE);
+  File dataFile = SD.open("dat.txt", FILE_WRITE); //short filename needs < 8.3 format
   
   if (dataFile) {
     dataFile.println(output_csv);
@@ -102,7 +102,8 @@ void loop(){
 
 String read_GPS ()
 {
-  unsigned long lat_GPS,lng_GPS,course_GPS,speed_GPS,date_GPS,time_GPS;
+  float lat_GPS,lng_GPS,course_GPS,speed_GPS;
+  int date_GPS,time_GPS;
   int startmilli = millis();
   
   while( (port_GPS.available() > 0) )//&& (millis()-startmilli < 80) )
@@ -116,27 +117,67 @@ String read_GPS ()
       {
         lat_GPS = GPS.location.lat();
         lng_GPS = GPS.location.lng();
-      }
+      } 
       if(GPS.speed.isValid())
       {
-        speed_GPS = GPS.speed.value();
+        speed_GPS = GPS.speed.knots();
       } 
       if(GPS.course.isValid())
       {
-        course_GPS = GPS.course.value();
+        course_GPS = GPS.course.deg();
       }
       if(GPS.time.isValid())
       {
         date_GPS = GPS.date.value();
         time_GPS = GPS.time.value();
-      }
+      } 
     }
-    return(String(lat_GPS) + "," +
-           String(lng_GPS) + "," +
-           String(course_GPS) + "," +
-           String(speed_GPS) + "," +
-           String(date_GPS) + "," +
-           String(time_GPS) );
+    
+    String outString;
+    
+    Serial.println(GPS.location.lat());
+    Serial.println(lat_GPS);
+    Serial.println(GPS.location.lng());
+    Serial.println(lng_GPS);
+        Serial.println(GPS.speed.knots());
+        Serial.println(speed_GPS);
+            Serial.println(GPS.course.deg());
+            Serial.println(course_GPS);
+                Serial.println(GPS.date.value());
+                Serial.println(date_GPS);
+                    Serial.println(GPS.time.value());
+                    Serial.println(time_GPS);
+                    
+    if (lat_GPS > 0)
+    {
+      outString += lat_GPS;
+    } else { outString += "NA"; }
+    outString += ",";
+    if (lng_GPS > 0)
+    {
+      outString += lng_GPS;
+    } else { outString += "NA"; }
+    outString += ",";
+    if (speed_GPS > 0)
+    {
+      outString += speed_GPS;
+    } else { outString += "NA"; }
+    outString += ",";
+    if (course_GPS > 0)
+    {
+      outString += course_GPS;
+    } else { outString += "NA"; }
+    outString += ",";
+    if (date_GPS > 0)
+    {
+      outString += date_GPS;
+    } else { outString += "NA"; }
+    outString += ",";
+    if (time_GPS > 0)
+    {
+      outString += time_GPS;
+    } else { outString += "NA"; }
+    return(outString);
   }
   
   
