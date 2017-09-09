@@ -25,8 +25,15 @@
 static const uint32_t baud_GPS = 9600;
 #define buff_Max 100
 
+//boat setup
+static const uint32_t baud_boat = 4800;
+
 //sd setup
 static const int chipSelect = 53;
+
+// accell setup
+#define MPU  0x68  // I2C address of the MPU-6050
+
 //variables
  String inputString = "";
  String boatString = "";
@@ -34,18 +41,21 @@ static const int chipSelect = 53;
  static const byte A_Hz = 10,
                    B_Hz = 10,
                    C_Hz = 50,
+                   Accel_Hz = 10,
                    Out_Hz = 10;
                   
  unsigned long A_Count = 0,
                B_Count = 0,
                C_Count = 0,
+               Accel_Count = 0,
                Out_Count = 0;
  
  static String null_var = "NA";
  
- static String tmp_Comp_Read = "NA", A_Read = "NA";
- static String tmp_GPS_Read = "NA", B_Read = "NA";
- static String tmp_Boat_Read = "NA", C_Read = "NA";
+ static String tmp_Comp_Read = null_var, A_Read = null_var;
+ static String tmp_GPS_Read = null_var, B_Read = null_var;
+ static String tmp_Boat_Read = null_var, C_Read = null_var;
+ static String tmp_Accel_Read = null_var, Accel_Read = null_var;
 
 void setup() {
   Serial.begin(9600);
@@ -58,10 +68,13 @@ void setup() {
   
   // Set up gps
    Serial1.begin(baud_GPS);
+   Serial1.setTimeout(500);
    inputString.reserve(buff_Max);
+   
   // Set up boat
-//   Serial2.begin(baud_boat);
-//   boatString.reserve(buff_Max);
+   Serial2.begin(baud_boat);
+   Serial2.setTimeout(500);
+   boatString.reserve(buff_Max);
 
   // Set up card
    Serial.print(F("Initializing SD card..."));
@@ -70,12 +83,19 @@ void setup() {
   {
     Serial.println(F("Card failed, or not present"));
     // don't do anything more:
-    return;
+   // return;
   } else {
   Serial.println(F("card initialized.")); }
+  
+ // Set up accelerometer
+  Wire.beginTransmission(MPU);
+  Wire.write(0x6B);  // PWR_MGMT_1 register
+  Wire.write(0);     // set to zero (wakes up the MPU-6050)
+  Wire.endTransmission(true);
 }
 
 void loop() {
+
   // put your main code here, to run repeatedly:
   
   // A = compass, B = GPS, C = boat NMEA
@@ -102,19 +122,15 @@ void loop() {
      case 3:{
       if ( millis() - C_Count > 1000/C_Hz ) {
         Machine_State = 7;
-    //    Serial.println(F("going to state 7"));
         break; } else {
-          Machine_State = 4;
-     //     Serial.println(F("going to state 4"));
+          Machine_State = 9;
           break; } }
      
      case 4:{
       if ( millis() - Out_Count > 1000/Out_Hz ) {
         Machine_State = 8;
-   //     Serial.println(F("going to state 8"));
         break; } else {
           Machine_State = 1;
-     //     Serial.println(F("going to state 1"));
           break; } }
           
      case 5: {
@@ -126,7 +142,6 @@ void loop() {
        }
        A_Count = millis();
        Machine_State = 2;
-  //     Serial.println(F("going to state 2"));
        break; }
        
      case 6: {
@@ -138,29 +153,45 @@ void loop() {
        }
        B_Count = millis();
        Machine_State = 3;
-   //    Serial.println(F("going to state 3"));
        break; }
        
      case 7: {
-       tmp_Boat_Read = read_boat_test();
+       tmp_Boat_Read = read_boat();
        if(tmp_Boat_Read != null_var) 
        {
        C_Read = tmp_Boat_Read;
        tmp_Boat_Read = null_var;
        }
        C_Count = millis();
-       Machine_State = 4;
-  //     Serial.println(F("going to state 4"));
+       Machine_State = 9;
        break; }
        
      case 8: {
-       write_to_sd(A_Read,B_Read,C_Read);
+       write_to_sd(A_Read,B_Read,C_Read,Accel_Read);
        Out_Count = millis();
        A_Read = null_var;
        B_Read = null_var;
        C_Read = null_var;
+       Accel_Read = null_var;
        Machine_State = 1;
-      // Serial.println("going to state 1");
+       break; }
+       
+     case 9:{
+      if ( millis() - Accel_Count > 1000/Accel_Hz ) {
+        Machine_State = 10;
+        break; } else {
+          Machine_State = 4;
+          break; } }
+          
+     case 10: {
+       tmp_Accel_Read = read_accel();
+       if(tmp_Accel_Read != null_var) 
+       {
+       Accel_Read = tmp_Accel_Read;
+       tmp_Accel_Read = null_var;
+       }
+       Accel_Count = millis();
+       Machine_State = 4;
        break; }
   }      
 }

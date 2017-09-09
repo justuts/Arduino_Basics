@@ -3,8 +3,7 @@ String read_compass(){
   
   int x_Comp,y_Comp,z_Comp;
   String output_Comp;
-  uint8_t reg_read;
-  
+
   Wire.beginTransmission(addr_Comp);
   Wire.write(0x02); //start with register 3.
   Wire.endTransmission();
@@ -29,7 +28,7 @@ String read_compass(){
                   String(y_Comp) + "," +
                   String(z_Comp) + "\"";
     return output_Comp;
-  } else {return null_var;}
+  } else {return "\"" + null_var + "\"";}
 }
   
   

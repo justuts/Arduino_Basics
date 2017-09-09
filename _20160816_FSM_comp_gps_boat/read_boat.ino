@@ -1,8 +1,8 @@
 String read_boat(){
  boatString = "";
- if(Serial.available() > 0) 
+ if(Serial2.available() > 0) 
  {
-   boatString = Serial.readStringUntil('\n');
+   boatString = Serial2.readStringUntil('\n');
  }
  if (boatString.length() > 0) 
  {
@@ -10,6 +10,6 @@ String read_boat(){
  } 
  else 
  { 
- return null_var;
+  return "\"" + null_var + "\"";
  }
 }
